@@ -14,6 +14,8 @@ jobs:
   build-apk:
     name: 构建安卓 APK
     runs-on: ubuntu-latest
+    outputs:
+      apkfile: ${{ steps.rename.outputs.apkfile }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,12 +41,43 @@ jobs:
       - name: 构建 Release APK
         run: gradle -p android assembleRelease
 
+      - name: 规范 APK 文件名
+        id: rename
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk 六爻预测.apk
+          echo "apkfile=六爻预测.apk" >> $GITHUB_OUTPUT
+
       - name: 上传 APK 产物
         uses: actions/upload-artifact@v4
         with:
           name: 六爻预测-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: 六爻预测.apk
           retention-days: 90
+
+  publish-release:
+    name: 发布 APK 到 Release
+    needs: build-apk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 下载 APK 产物
+        uses: actions/download-artifact@v4
+        with:
+          name: 六爻预测-APK
+
+      - name: 发布到 latest Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag: latest
+          name: 六爻预测（最新版）
+          body: |
+            安卓手机安装包，下载后点开即可安装，无需联网。
+            若提示“未知来源”，允许本次安装即可。
+          files: 六爻预测.apk
+          prerelease: false
 
   deploy-pages:
     name: 发布手机网页
