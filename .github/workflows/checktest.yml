@@ -13,22 +13,105 @@ permissions:
 
 jobs:
   build:
-    name: 手工构建 APK
+    name: 分步手工构建 APK
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: 查看预装环境
+      - name: 准备目录与资源
         run: |
-          echo "JAVA_HOME=$JAVA_HOME"
-          java -version
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" || true
-          ls "$ANDROID_HOME/build-tools" || true
+          set -e
+          APP_DIR="$PWD/android/app"
+          SDK="$ANDROID_HOME"
+          BT="$(ls -d "$SDK"/build-tools/*/ | sort -V | tail -1)"
+          echo "BT=$BT" >> "$GITHUB_ENV"
+          echo "ANDROID_JAR=$(ls "$SDK"/platforms/android-*/android.jar | sort -V | tail -1)" >> "$GITHUB_ENV"
+          B=manual_out
+          rm -rf "$B"
+          mkdir -p "$B/gen" "$B/obj" "$B/dex" "$B/assets/web"
+          sed 's|<manifest |<manifest package="com.liuyao.app" |' \
+            "$APP_DIR/src/main/AndroidManifest.xml" > "$B/AndroidManifest.xml"
+          cp index.html app.js liuyao_core.js liuyao_zhuan.js manifest.json sw.js "$B/assets/web/"
+          cp -r icons "$B/assets/web/"
 
-      - name: 手工构建（脚本内逐步上报心跳）
-        run: bash android/build_manual.sh
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】准备完成',body:new Date().toISOString()});
+
+      - name: aapt2 compile
+        run: |
+          set -e
+          "$BT/aapt2" compile --dir android/app/src/main/res -o manual_out/res.zip
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】aapt2 compile 完成',body:new Date().toISOString()});
+
+      - name: aapt2 link
+        run: |
+          set -e
+          "$BT/aapt2" link -I "$ANDROID_JAR" --manifest manual_out/AndroidManifest.xml \
+            -A manual_out/assets --min-sdk-version 21 --target-sdk-version 34 \
+            --version-code 1 --version-name 1.0 --java manual_out/gen \
+            -o manual_out/base.apk manual_out/res.zip
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】aapt2 link 完成',body:new Date().toISOString()});
+
+      - name: javac
+        run: |
+          set -e
+          find manual_out/gen android/app/src/main/java -name '*.java' > manual_out/sources.txt
+          javac -source 17 -target 17 -nowarn -classpath "$ANDROID_JAR" -d manual_out/obj @manual_out/sources.txt
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】javac 完成',body:new Date().toISOString()});
+
+      - name: d8 转 dex
+        run: |
+          set -e
+          find manual_out/obj -name '*.class' > manual_out/classes.txt
+          "$BT/d8" --output manual_out/dex --lib "$ANDROID_JAR" --min-api 21 @manual_out/classes.txt
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】d8 完成',body:new Date().toISOString()});
+
+      - name: 合并 dex
+        run: |
+          set -e
+          cp manual_out/base.apk manual_out/with-dex.apk
+          (cd manual_out/dex && zip -j -q ../with-dex.apk classes.dex)
+
+      - name: 生成密钥并对齐签名
+        run: |
+          set -e
+          keytool -keystore manual_out/debug.keystore -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
+          "$BT/zipalign" -f 4 manual_out/with-dex.apk manual_out/aligned.apk
+          "$BT/apksigner" sign --ks manual_out/debug.keystore --ks-pass pass:android --key-pass pass:android \
+            --out 六爻预测.apk manual_out/aligned.apk
+          "$BT/apksigner" verify 六爻预测.apk
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】签名完成',body:new Date().toISOString()});
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
@@ -48,12 +131,8 @@ jobs:
           files: 六爻预测.apk
           prerelease: false
 
-      - name: 上报成功
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner, repo: context.repo.repo,
-              title: 'APK 构建并发布成功',
-              body: '时间=' + new Date().toISOString()
-            });
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'APK 构建并发布成功',body:new Date().toISOString()});
