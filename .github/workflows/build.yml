@@ -30,14 +30,18 @@ jobs:
 
       - name: 配置 Android SDK（使用镜像预装）
         run: |
-          yes | sdkmanager --licenses > /dev/null
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          {
+            yes | sdkmanager --licenses
+            sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          } 2>&1 | tee sdk_log.txt
 
       - name: 安装固定 Gradle 8.9
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
-          unzip -q gradle-8.9-bin.zip -d $HOME
-          echo "$HOME/gradle-8.9/bin" >> $GITHUB_PATH
+          {
+            wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+            unzip -q gradle-8.9-bin.zip -d $HOME
+            echo "$HOME/gradle-8.9/bin" >> $GITHUB_PATH
+          } 2>&1 | tee gradle_install_log.txt
 
       - name: 准备网页资源到 assets
         run: |
@@ -56,20 +60,37 @@ jobs:
           script: |
             const fs = require('fs');
             const nl = String.fromCharCode(10);
-            const jobs = await github.rest.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId
-            });
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
             let report = [];
-            for (const job of jobs.data.jobs) {
-              for (const step of (job.steps || [])) {
-                report.push(step.number + '. ' + step.name + ' => ' + step.conclusion);
+            let failLines = [];
+            for (let i = 0; i < 15; i++) {
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId
+              });
+              report = [];
+              failLines = [];
+              for (const job of jobs.data.jobs) {
+                for (const step of (job.steps || [])) {
+                  const line = step.number + '. ' + step.name + ' => ' + step.conclusion;
+                  report.push(line);
+                  if (step.conclusion === 'failure') failLines.push(line);
+                }
               }
+              if (failLines.length > 0) break;
+              await sleep(4000);
             }
-            let log = '';
-            try { log = fs.readFileSync('build_log.txt', 'utf8'); } catch (e) { log = '无日志（构建步骤未执行）'; }
-            if (log.length > 20000) log = log.slice(-20000);
-            const body = '【步骤结果】' + nl + report.join(nl) + nl + nl +
-                         '【构建日志】' + nl + '```' + nl + log + nl + '```';
+            const readLog = (name) => {
+              try {
+                let t = fs.readFileSync(name, 'utf8');
+                if (t.length > 9000) t = t.slice(-9000);
+                return t;
+              } catch (e) { return '（无 ' + name + '）'; }
+            };
+            const body = '【失败步骤】' + nl + failLines.join(nl) + nl + nl +
+                         '【全部步骤】' + nl + report.join(nl) + nl + nl +
+                         '【SDK 日志】' + nl + '```' + nl + readLog('sdk_log.txt') + nl + '```' + nl +
+                         '【Gradle 安装日志】' + nl + '```' + nl + readLog('gradle_install_log.txt') + nl + '```' + nl +
+                         '【构建日志】' + nl + '```' + nl + readLog('build_log.txt') + nl + '```';
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
               title: '【构建诊断】#' + context.runNumber,
