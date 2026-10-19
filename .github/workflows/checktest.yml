@@ -95,23 +95,52 @@ jobs:
           set -e
           cp manual_out/base.apk manual_out/with-dex.apk
           (cd manual_out/dex && zip -j -q ../with-dex.apk classes.dex)
-
-      - name: 生成密钥并对齐签名
-        run: |
-          set -e
-          keytool -keystore manual_out/debug.keystore -storepass android -keypass android \
-            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
-          "$BT/zipalign" -f 4 manual_out/with-dex.apk manual_out/aligned.apk
-          "$BT/apksigner" sign --ks manual_out/debug.keystore --ks-pass pass:android --key-pass pass:android \
-            --out 六爻预测.apk manual_out/aligned.apk
-          "$BT/apksigner" verify 六爻预测.apk
+          ls -l manual_out/with-dex.apk
 
       - uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
-              title:'【心跳】签名完成',body:new Date().toISOString()});
+              title:'【心跳】合并 dex 完成',body:new Date().toISOString()});
+
+      - name: 生成密钥
+        run: |
+          set -e
+          keytool -J-Djava.security.egd=file:/dev/./urandom \
+            -keystore manual_out/debug.keystore -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】keytool 完成',body:new Date().toISOString()});
+
+      - name: zipalign
+        run: |
+          set -e
+          "$BT/zipalign" -f 4 manual_out/with-dex.apk manual_out/aligned.apk
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】zipalign 完成',body:new Date().toISOString()});
+
+      - name: apksigner 签名
+        run: |
+          set -e
+          "$BT/apksigner" sign --ks manual_out/debug.keystore --ks-pass pass:android --key-pass pass:android \
+            --out 六爻预测.apk manual_out/aligned.apk
+          "$BT/apksigner" verify --verbose 六爻预测.apk
+          ls -lh 六爻预测.apk
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【心跳】apksigner 完成',body:new Date().toISOString()});
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
