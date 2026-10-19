@@ -50,20 +50,30 @@ jobs:
       - name: 构建 Release APK
         run: gradle -p android assembleRelease --no-daemon 2>&1 | tee build_log.txt
 
-      - name: 失败时上报构建日志
+      - name: 失败时上报诊断
         if: failure()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            let log = '';
-            try { log = fs.readFileSync('build_log.txt', 'utf8'); } catch (e) { log = '无日志'; }
-            if (log.length > 28000) log = log.slice(-28000);
             const nl = String.fromCharCode(10);
-            const body = nl + '```' + nl + log + nl + '```' + nl;
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId
+            });
+            let report = [];
+            for (const job of jobs.data.jobs) {
+              for (const step of (job.steps || [])) {
+                report.push(step.number + '. ' + step.name + ' => ' + step.conclusion);
+              }
+            }
+            let log = '';
+            try { log = fs.readFileSync('build_log.txt', 'utf8'); } catch (e) { log = '无日志（构建步骤未执行）'; }
+            if (log.length > 20000) log = log.slice(-20000);
+            const body = '【步骤结果】' + nl + report.join(nl) + nl + nl +
+                         '【构建日志】' + nl + '```' + nl + log + nl + '```';
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
-              title: '【构建日志】#' + context.runNumber,
+              title: '【构建诊断】#' + context.runNumber,
               body: body
             });
 
