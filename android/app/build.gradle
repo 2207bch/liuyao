@@ -29,6 +29,6 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.webkit:webkit:1.11.0'
+    // 极简纯系统 WebView：不依赖任何 androidx 库，
+    // 构建零外部下载，快速且稳定
 }
