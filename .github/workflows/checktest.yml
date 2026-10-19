@@ -136,26 +136,29 @@ jobs:
             await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
               title:'【心跳】apksigner 完成',body:new Date().toISOString()});
 
-      - name: 上传 APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: 六爻预测-APK
-          path: 六爻预测.apk
-          retention-days: 90
-
-      - name: 发布到 latest Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag: latest
-          name: 六爻预测（最新版）
-          body: |
-            安卓手机安装包，下载后点开即可安装，无需联网。
-            若提示“未知来源”，允许本次安装即可。
-          files: 六爻预测.apk
-          prerelease: false
-
-      - uses: actions/github-script@v7
+      - name: 发布 Release（GitHub API）
+        uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
-              title:'APK 构建并发布成功',body:new Date().toISOString()});
+            const fs = require('fs');
+            const apk = fs.readFileSync('六爻预测.apk');
+            const owner = context.repo.owner, repo = context.repo.repo;
+            let release;
+            try {
+              const r = await github.rest.repos.getReleaseByTag({owner, repo, tag: 'latest'});
+              release = r.data;
+            } catch (e) {
+              const c = await github.rest.repos.createRelease({
+                owner, repo, tag_name: 'latest', name: '六爻预测（最新版）',
+                body: '安卓手机安装包，下载后点开即可安装，无需联网。若提示“未知来源”，允许本次安装即可。',
+                prerelease: false
+              });
+              release = c.data;
+            }
+            await github.rest.repos.uploadReleaseAsset({
+              owner, repo, release_id: release.id,
+              name: '六爻预测.apk', data: apk
+            });
+            await github.rest.issues.create({owner, repo,
+              title:'APK 构建并发布成功',
+              body:'Release：' + release.html_url + ' 时间=' + new Date().toISOString()});
