@@ -1,0 +1,23 @@
+name: 运行诊断
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  ping:
+    name: 检查 Actions 是否运行
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const title = '【诊断】Actions 运行正常 #' + context.runNumber;
+            const body = 'runId=' + context.runId + '，触发时间=' + new Date().toISOString();
+            await github.rest.issues.create({ owner, repo, title, body });
