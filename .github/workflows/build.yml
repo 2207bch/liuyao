@@ -14,12 +14,10 @@ jobs:
   build-apk:
     name: 构建安卓 APK
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     permissions:
       contents: read
       issues: write
-    outputs:
-      apkfile: ${{ steps.rename.outputs.apkfile }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,37 +27,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 配置 Android SDK（使用镜像预装）
-        run: |
-          {
-            yes | sdkmanager --licenses
-            sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          } 2>&1 | tee sdk_log.txt
-
-      - name: 安装固定 Gradle 8.9
-        run: |
-          {
-            wget --tries=3 --timeout=60 https://services.gradle.org/distributions/gradle-8.9-bin.zip
-            unzip -o gradle-8.9-bin.zip -d $HOME
-            echo "$HOME/gradle-8.9/bin" >> $GITHUB_PATH
-            $HOME/gradle-8.9/bin/gradle --version
-          } 2>&1 | tee gradle_install_log.txt
-
-      - name: 准备网页资源到 assets
-        run: |
-          mkdir -p android/app/src/main/assets/web
-          cp index.html app.js liuyao_core.js liuyao_zhuan.js manifest.json sw.js \
-             android/app/src/main/assets/web/
-          cp -r icons android/app/src/main/assets/web/
-
-      - name: 检查 SDK 安装
+      - name: 查看预装 SDK
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls -d "$ANDROID_HOME/platforms/android-34" "$ANDROID_HOME/build-tools/34.0.0"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
 
-      - name: 构建 Release APK
-        run: gradle -p android assembleRelease --no-daemon --console=plain --stacktrace 2>&1 | tee build_log.txt
+      - name: 手工构建 APK（不用 Gradle，零 Maven 下载）
+        run: bash android/build_manual.sh 2>&1 | tee build_log.txt
 
       - name: 失败时上报诊断
         if: failure() || cancelled()
@@ -71,7 +46,7 @@ jobs:
             const sleep = (ms) => new Promise(r => setTimeout(r, ms));
             let report = [];
             let failLines = [];
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 12; i++) {
               const jobs = await github.rest.actions.listJobsForWorkflowRun({
                 owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId
               });
@@ -87,29 +62,19 @@ jobs:
               if (failLines.length > 0) break;
               await sleep(4000);
             }
-            const readLog = (name) => {
-              try {
-                let t = fs.readFileSync(name, 'utf8');
-                if (t.length > 9000) t = t.slice(-9000);
-                return t;
-              } catch (e) { return '（无 ' + name + '）'; }
-            };
+            let log = '';
+            try {
+              log = fs.readFileSync('build_log.txt', 'utf8');
+              if (log.length > 22000) log = log.slice(-22000);
+            } catch (e) { log = '（无构建日志）'; }
             const body = '【失败步骤】' + nl + failLines.join(nl) + nl + nl +
-                         '【全部步骤】' + nl + report.join(nl) + nl + nl +
-                         '【SDK 日志】' + nl + '```' + nl + readLog('sdk_log.txt') + nl + '```' + nl +
-                         '【Gradle 安装日志】' + nl + '```' + nl + readLog('gradle_install_log.txt') + nl + '```' + nl +
-                         '【构建日志】' + nl + '```' + nl + readLog('build_log.txt') + nl + '```';
+                         '【全部步骤】' + report.join(nl) + nl + nl +
+                         '【构建日志】' + nl + '```' + nl + log + nl + '```';
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
               title: '【构建诊断】#' + context.runNumber,
               body: body
             });
-
-      - name: 规范 APK 文件名
-        id: rename
-        run: |
-          cp android/app/build/outputs/apk/release/app-release.apk 六爻预测.apk
-          echo "apkfile=六爻预测.apk" >> $GITHUB_OUTPUT
 
       - name: 上传 APK 产物
         uses: actions/upload-artifact@v4
