@@ -31,6 +31,12 @@ jobs:
       - name: 配置 Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: 安装固定 Gradle 8.9
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip -d $HOME
+          echo "$HOME/gradle-8.9/bin" >> $GITHUB_PATH
+
       - name: 准备网页资源到 assets
         run: |
           mkdir -p android/app/src/main/assets/web
@@ -39,7 +45,7 @@ jobs:
           cp -r icons android/app/src/main/assets/web/
 
       - name: 构建 Release APK
-        run: gradle -p android assembleRelease
+        run: gradle -p android assembleRelease --no-daemon
 
       - name: 规范 APK 文件名
         id: rename
