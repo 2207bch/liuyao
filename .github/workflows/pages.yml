@@ -20,16 +20,12 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
-    name: 部署到 GitHub Pages
+  setup:
+    name: 启用 Pages 站点
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: 启用 Pages 站点（报告结果）
+      - name: 启用（报告结果）
         uses: actions/github-script@v7
         with:
           script: |
@@ -51,6 +47,16 @@ jobs:
             }
             await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
               title:'【网页】Pages 状态',body:msg});
+
+  deploy:
+    name: 部署
+    needs: setup
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
 
       - name: 组装站点
         run: |
