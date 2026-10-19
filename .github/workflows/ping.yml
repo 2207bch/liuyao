@@ -1,9 +1,9 @@
 name: 运行诊断
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
+# 已停用自动触发：正式构建与发布统一使用 checktest.yml。
 
 permissions:
   contents: read
