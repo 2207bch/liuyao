@@ -103,19 +103,11 @@ jobs:
             await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
               title:'【心跳】合并 dex 完成',body:new Date().toISOString()});
 
-      - name: 生成密钥
+      - name: 还原签名密钥
         run: |
           set -e
-          keytool -J-Djava.security.egd=file:/dev/./urandom \
-            -keystore manual_out/debug.keystore -storepass android -keypass android \
-            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
-              title:'【心跳】keytool 完成',body:new Date().toISOString()});
+          base64 -d android/debug.p12.b64 > manual_out/debug.p12
+          ls -l manual_out/debug.p12
 
       - name: zipalign
         run: |
@@ -128,10 +120,12 @@ jobs:
             await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
               title:'【心跳】zipalign 完成',body:new Date().toISOString()});
 
-      - name: apksigner 签名
+      - name: apksigner 签名（用预生成 PKCS12）
         run: |
           set -e
-          "$BT/apksigner" sign --ks manual_out/debug.keystore --ks-pass pass:android --key-pass pass:android \
+          "$BT/apksigner" sign --ks manual_out/debug.p12 --ks-type PKCS12 \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android --key-pass pass:android \
             --out 六爻预测.apk manual_out/aligned.apk
           "$BT/apksigner" verify --verbose 六爻预测.apk
           ls -lh 六爻预测.apk
