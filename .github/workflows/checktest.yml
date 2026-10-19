@@ -1,0 +1,29 @@
+name: checkout测试
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/checktest.yml'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  t:
+    name: checkout 测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 列出文件
+        run: ls -la
+      - name: 上报成功
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: 'checkout测试成功',
+              body: 'checkout 与命令执行正常，时间=' + new Date().toISOString()
+            });
