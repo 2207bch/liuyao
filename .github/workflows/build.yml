@@ -1,0 +1,71 @@
+name: 构建APK与发布网页
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-apk:
+    name: 构建安卓 APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 配置 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 配置 Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 准备网页资源到 assets
+        run: |
+          mkdir -p android/app/src/main/assets/web
+          cp index.html app.js liuyao_core.js liuyao_zhuan.js manifest.json sw.js \
+             android/app/src/main/assets/web/
+          cp -r icons android/app/src/main/assets/web/
+
+      - name: 构建 Release APK
+        run: gradle -p android assembleRelease
+
+      - name: 上传 APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: 六爻预测-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 90
+
+  deploy-pages:
+    name: 发布手机网页
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 组装站点文件
+        run: |
+          mkdir -p public
+          cp index.html app.js liuyao_core.js liuyao_zhuan.js manifest.json sw.js public/
+          cp -r icons public/
+
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - id: deploy
+        name: 部署到 GitHub Pages
+        uses: actions/deploy-pages@v4

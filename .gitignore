@@ -1,0 +1,12 @@
+node_modules/
+_site/
+public/
+android/app/src/main/assets/web/
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
+.DS_Store
+# 大体积测试期望数据（可用 gen_*.py 重新生成）
+expected.json
+zhuan_expected.json

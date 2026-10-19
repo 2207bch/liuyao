@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#8b2500">
+<title>六爻预测 · 卜筮正宗</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --red:#8b2500; --red2:#a0522d; --bg:#f5f0e6; --panel:#faf6ee;
+    --ink:#2c1810; --dong:#c0392b; --kong:#7f8c8d; --line:#1a1a1a;
+    --gui:#e8dcc8; --border:#d9cbb2;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+    font-size:15px; line-height:1.6;}
+  body{max-width:560px; margin:0 auto; min-height:100vh;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+
+  /* 顶部 */
+  .topbar{background:linear-gradient(135deg,#8b2500,#6e1d00); color:#f7e9d8;
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px; text-align:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.18);}
+  .topbar h1{margin:0; font-size:20px; letter-spacing:3px; font-weight:700;}
+  .topbar .sub{font-size:12px; opacity:.85; margin-top:2px; letter-spacing:1px;}
+
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    margin:12px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .card h2{margin:0 0 10px; font-size:15px; color:var(--red); letter-spacing:2px;
+    display:flex; align-items:center; gap:6px;}
+  .card h2::before{content:""; width:4px; height:15px; background:var(--red); border-radius:2px;}
+
+  /* 日期 */
+  .date-row{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .date-val{flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; font-size:15px; font-weight:600; color:var(--red);}
+  .icon-btn{border:none; background:var(--red); color:#fff; width:44px; height:44px;
+    border-radius:8px; font-size:20px; cursor:pointer;}
+  .icon-btn:active{background:#6e1d00;}
+
+  /* 下拉 */
+  select{width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+    background:var(--bg); font-size:15px; color:var(--ink); margin-bottom:10px;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%238b2500' stroke-width='2' fill='none'/></svg>");
+    background-repeat:no-repeat; background-position:right 14px center; padding-right:34px;}
+
+  /* 起卦爻 */
+  .yao-box{background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    padding:8px 10px; margin:6px 0 12px;}
+  .yao-row{display:flex; align-items:center; gap:10px; padding:7px 4px;
+    border-bottom:1px dashed var(--border); cursor:pointer;}
+  .yao-row:last-child{border-bottom:none;}
+  .yao-row .pos{width:38px; font-size:13px; color:var(--red2); font-weight:600;}
+  .yao-row .sym{flex:1; font-family:monospace; font-size:17px; letter-spacing:1px; color:var(--line);}
+  .yao-row .tag{font-size:12px; color:var(--kong); width:34px; text-align:right;}
+  .yao-row .tag.dong{color:var(--dong); font-weight:700;}
+
+  .btn-row{display:flex; gap:10px;}
+  .btn{flex:1; border:none; border-radius:10px; padding:13px; font-size:16px;
+    letter-spacing:2px; cursor:pointer; font-weight:600;}
+  .btn.shake{background:var(--gui); color:var(--red); border:1px solid var(--border);}
+  .btn.go{background:linear-gradient(135deg,#a0522d,#8b2500); color:#fff;
+    box-shadow:0 2px 6px rgba(139,37,0,.3);}
+  .btn:active{opacity:.85;}
+  .hint{font-size:12px; color:var(--kong); margin:8px 2px 0;}
+
+  /* 卦盘 */
+  .gua-head{text-align:center; margin-bottom:6px;}
+  .gua-head .nm{font-size:19px; font-weight:700; color:var(--red); letter-spacing:2px;}
+  .gua-head .gong{font-size:12px; color:var(--red2); margin-top:2px;}
+  .gua-head .rq{font-size:12px; color:var(--ink); margin-top:4px; background:var(--bg);
+    display:inline-block; padding:3px 10px; border-radius:6px;}
+  .gua-table{width:100%; border-collapse:collapse; margin-top:8px; font-size:13px;}
+  .gua-table td{padding:6px 3px; border-bottom:1px solid var(--border); text-align:center;
+    vertical-align:middle;}
+  .gua-table .ls{color:var(--red2); width:40px;}
+  .gua-table .lq{font-weight:600; width:42px;}
+  .gua-table .naz{color:var(--ink); width:52px; font-size:12px;}
+  .gua-table .yf{font-family:monospace; font-size:14px; width:52px;}
+  .gua-table .sy{color:var(--red); font-weight:700; width:24px;}
+  .gua-table .bd{font-size:11px; color:var(--dong); width:58px;}
+  .gua-table tr.dong{background:#fbeeec;}
+  .gua-table .kp{color:var(--kong); font-size:11px;}
+  .gua-table tr.kong td{color:var(--kong);}
+
+  /* 断语 */
+  .fenxi-head{display:flex; align-items:center; justify-content:space-between;}
+  .zoom-btn{border:1px solid var(--border); background:var(--bg); color:var(--red);
+    border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;}
+  .fenxi-body{font-size:14px;}
+  .fenxi-body .sec{font-size:15px; font-weight:700; color:var(--red); margin:14px 0 6px;
+    letter-spacing:1px;}
+  .fenxi-body .sub{font-weight:700; color:var(--red2); margin:10px 0 4px;}
+  .fenxi-body p{margin:5px 0; white-space:pre-wrap; word-break:break-word;}
+  .fenxi-body .note{color:var(--kong); font-size:12px;}
+
+  /* 放大态 */
+  #fenxiCard.zoomed{position:fixed; inset:0; z-index:999; max-width:none; margin:0;
+    border-radius:0; overflow-y:auto; padding:calc(12px + env(safe-area-inset-top)) 16px
+    calc(20px + env(safe-area-inset-bottom));}
+  #fenxiCard.zoomed .fenxi-body{font-size:18px;}
+  #fenxiCard.zoomed .fenxi-body .sec{font-size:20px;}
+  #fenxiCard.zoomed .fenxi-body .sub{font-size:18px;}
+  #fenxiCard.zoomed .fenxi-body .note{font-size:14px;}
+
+  /* 日历弹窗 */
+  .cal-mask{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000;
+    display:none; align-items:center; justify-content:center; padding:20px;}
+  .cal-mask.show{display:flex;}
+  .cal{background:var(--panel); border-radius:12px; width:100%; max-width:340px;
+    padding:14px; box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .cal-nav button{border:none; background:var(--bg); border-radius:6px; width:36px; height:34px;
+    font-size:18px; color:var(--red); cursor:pointer;}
+  .cal-nav .tt{font-weight:700; color:var(--red); font-size:16px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center;}
+  .cal-grid .wd{font-size:12px; color:var(--kong); padding:6px 0;}
+  .cal-grid .d{padding:9px 0; font-size:14px; border-radius:6px; cursor:pointer;}
+  .cal-grid .d:active{background:var(--gui);}
+  .cal-grid .d.sel{background:var(--red); color:#fff; font-weight:700;}
+  .cal-grid .d.muted{color:#c3b59e;}
+  .cal-grid .d.today{box-shadow:inset 0 0 0 1px var(--red2);}
+  .cal-grid .d.empty{cursor:default;}
+
+  .foot{text-align:center; font-size:11px; color:var(--kong); margin:16px; letter-spacing:1px;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>六 爻 预 测</h1>
+    <div class="sub">卜筮正宗 · 增删卜易</div>
+  </div>
+
+  <!-- 起卦设置 -->
+  <div class="card">
+    <h2>起 卦 设 置</h2>
+    <div class="date-row">
+      <div class="date-val" id="dateVal">—</div>
+      <button class="icon-btn" id="calBtn" title="选择日期">&#128197;</button>
+    </div>
+    <select id="shiqing"></select>
+    <select id="role" hidden></select>
+    <div class="yao-box" id="yaoBox"></div>
+    <div class="btn-row">
+      <button class="btn shake" id="shakeBtn">一键摇卦</button>
+      <button class="btn go" id="goBtn">排盘断卦</button>
+    </div>
+    <div class="hint">点每一行可手动选爻；●单=少阳　●拆=少阴　●重=老阳(动)　●交=老阴(动)</div>
+  </div>
+
+  <!-- 卦盘 -->
+  <div class="card" id="guaCard" hidden>
+    <div class="gua-head">
+      <div class="nm" id="guaName"></div>
+      <div class="gong" id="guaGong"></div>
+      <div class="rq" id="guaRq"></div>
+    </div>
+    <table class="gua-table" id="guaTable"></table>
+  </div>
+
+  <!-- 断语 -->
+  <div class="card" id="fenxiCard" hidden>
+    <div class="fenxi-head">
+      <h2 style="margin:0;">断 卦 分 析</h2>
+      <button class="zoom-btn" id="zoomBtn">&#9974; 放大</button>
+    </div>
+    <div class="fenxi-body" id="fenxiBody"></div>
+  </div>
+
+  <div class="foot">理论依据：《卜筮正宗》《增删卜易》　·　卦理仅作参考</div>
+
+  <!-- 日历弹窗 -->
+  <div class="cal-mask" id="calMask">
+    <div class="cal">
+      <div class="cal-nav">
+        <button id="calPrev">&#8249;</button>
+        <div class="tt" id="calTitle"></div>
+        <button id="calNext">&#850;</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <script src="liuyao_core.js"></script>
+  <script src="liuyao_zhuan.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
