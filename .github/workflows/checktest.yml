@@ -1,4 +1,4 @@
-name: checkout测试
+name: 构建APK
 
 on:
   push:
@@ -8,29 +8,52 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: write
   issues: write
 
 jobs:
-  t:
-    name: checkout 测试
+  build:
+    name: 手工构建 APK
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: 列出文件
-        run: ls -la
-      - name: 查看预装环境（对照 build 步骤2）
+
+      - name: 查看预装环境
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           java -version
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/platforms" || true
           ls "$ANDROID_HOME/build-tools" || true
+
+      - name: 手工构建（脚本内逐步上报心跳）
+        run: bash android/build_manual.sh
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 六爻预测-APK
+          path: 六爻预测.apk
+          retention-days: 90
+
+      - name: 发布到 latest Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag: latest
+          name: 六爻预测（最新版）
+          body: |
+            安卓手机安装包，下载后点开即可安装，无需联网。
+            若提示“未知来源”，允许本次安装即可。
+          files: 六爻预测.apk
+          prerelease: false
+
       - name: 上报成功
         uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
-              title: 'checkout测试成功（含预装环境）',
-              body: 'checkout + java -version + SDK 检查正常，时间=' + new Date().toISOString()
+              title: 'APK 构建并发布成功',
+              body: '时间=' + new Date().toISOString()
             });
