@@ -21,19 +21,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 配置 JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: 查看预装 SDK
+      - name: 查看预装环境
         run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/platforms" || true
           ls "$ANDROID_HOME/build-tools" || true
 
-      - name: 手工构建 APK（不用 Gradle，零 Maven 下载）
+      - name: 手工构建 APK（不用 Gradle，零下载）
         run: bash android/build_manual.sh 2>&1 | tee build_log.txt
 
       - name: 失败时上报诊断
@@ -68,7 +64,7 @@ jobs:
               if (log.length > 22000) log = log.slice(-22000);
             } catch (e) { log = '（无构建日志）'; }
             const body = '【失败步骤】' + nl + failLines.join(nl) + nl + nl +
-                         '【全部步骤】' + report.join(nl) + nl + nl +
+                         '【全部步骤】' + nl + report.join(nl) + nl + nl +
                          '【构建日志】' + nl + '```' + nl + log + nl + '```';
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
