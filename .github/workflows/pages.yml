@@ -1,19 +1,11 @@
 name: 部署手机网页
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'app.js'
-      - 'liuyao_core.js'
-      - 'liuyao_zhuan.js'
-      - 'manifest.json'
-      - 'sw.js'
-      - 'icons/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
+# 自动触发暂时停用：当前 Actions 环境间歇卡顿。在线固定网址后续可在
+# 仓库 Settings→Pages 选 “GitHub Actions” 后，再手动运行本 workflow。
+# 手机网页分享目前请直接用单文件「六爻预测.html」（微信/QQ 发送即可）。
 permissions:
   contents: read
   pages: write
