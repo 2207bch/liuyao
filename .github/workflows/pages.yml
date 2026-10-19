@@ -29,18 +29,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 启用 Pages 站点（若尚未启用）
+      - name: 启用 Pages 站点（报告结果）
         uses: actions/github-script@v7
         with:
           script: |
+            let msg;
             try {
-              await github.rest.repos.createPagesSite({
+              const r = await github.rest.repos.createPagesSite({
                 owner: context.repo.owner, repo: context.repo.repo, build_type: 'workflow'
               });
-              await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
-                title:'【网页】已启用 GitHub Pages',body:new Date().toISOString()});
-            } catch (e) {
+              msg = 'createPagesSite 成功：' + JSON.stringify(r.data);
+            } catch (e1) {
+              try {
+                const g = await github.rest.repos.getPages({
+                  owner: context.repo.owner, repo: context.repo.repo
+                });
+                msg = '站点已存在：' + JSON.stringify(g.data);
+              } catch (e2) {
+                msg = 'create 失败: ' + e1.message + ' | get 失败: ' + e2.message;
+              }
             }
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【网页】Pages 状态',body:msg});
 
       - name: 组装站点
         run: |
