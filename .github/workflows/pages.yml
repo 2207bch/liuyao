@@ -1,0 +1,67 @@
+name: 部署手机网页
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'app.js'
+      - 'liuyao_core.js'
+      - 'liuyao_zhuan.js'
+      - 'manifest.json'
+      - 'sw.js'
+      - 'icons/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    name: 部署到 GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 启用 Pages 站点（若尚未启用）
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.repos.createPagesSite({
+                owner: context.repo.owner, repo: context.repo.repo, build_type: 'workflow'
+              });
+              await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+                title:'【网页】已启用 GitHub Pages',body:new Date().toISOString()});
+            } catch (e) {
+            }
+
+      - name: 组装站点
+        run: |
+          set -e
+          mkdir -p public
+          cp index.html app.js liuyao_core.js liuyao_zhuan.js manifest.json sw.js public/
+          cp -r icons public/
+
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - id: deploy
+        name: 部署
+        uses: actions/deploy-pages@v4
+
+      - name: 上报网址
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【网页】部署成功',
+              body:'网址：' + 'https://' + context.repo.owner + '.github.io/' + context.repo.repo + '/'});
