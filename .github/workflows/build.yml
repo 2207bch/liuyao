@@ -57,14 +57,14 @@ jobs:
           script: |
             const fs = require('fs');
             let log = '';
-            try { log = fs.readFileSync('build_log.txt', 'utf8'); } catch (e) { log = '无日志 ' + e; }
-            log = log.slice(-29000);
+            try { log = fs.readFileSync('build_log.txt', 'utf8'); } catch (e) { log = '无日志'; }
+            if (log.length > 28000) log = log.slice(-28000);
+            const nl = String.fromCharCode(10);
+            const body = nl + '```' + nl + log + nl + '```' + nl;
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
               title: '【构建日志】#' + context.runNumber,
-              body: '```
-' + log + '
-```'
+              body: body
             });
 
       - name: 规范 APK 文件名
