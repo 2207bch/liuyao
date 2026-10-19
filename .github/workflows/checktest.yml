@@ -155,10 +155,16 @@ jobs:
               });
               release = c.data;
             }
+            const existing = await github.rest.repos.listReleaseAssets({
+              owner, repo, release_id: release.id
+            });
+            for (const a of existing.data) {
+              await github.rest.repos.deleteReleaseAsset({owner, repo, asset_id: a.id});
+            }
             await github.rest.repos.uploadReleaseAsset({
               owner, repo, release_id: release.id,
-              name: '六爻预测.apk', data: apk
+              name: 'liuyao.apk', data: apk
             });
             await github.rest.issues.create({owner, repo,
               title:'APK 构建并发布成功',
-              body:'Release：' + release.html_url + ' 时间=' + new Date().toISOString()});
+              body:'Release：' + release.html_url + ' 下载文件名 liuyao.apk，时间=' + new Date().toISOString()});
