@@ -5,7 +5,7 @@ set -e
 
 issue() {
   local msg="$1"
-  curl -s -o /dev/null -X POST \
+  curl -s --max-time 15 --connect-timeout 10 -o /dev/null -X POST \
     -H "Authorization: Bearer $GITHUB_TOKEN" \
     -H "Accept: application/vnd.github+json" \
     "https://api.github.com/repos/$GITHUB_REPOSITORY/issues" \
