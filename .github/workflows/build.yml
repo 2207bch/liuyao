@@ -28,11 +28,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 配置 Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: 配置 Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: 配置 Android SDK（使用镜像预装）
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: 安装固定 Gradle 8.9
         run: |
