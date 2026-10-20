@@ -79,21 +79,36 @@
   function renderDate(){ dateVal.textContent = fmtDate(selDate); }
   renderDate();
 
-  // ---- 爻区（上爻在上，初爻在下）----
+  // ---- 爻区（上爻在上，初爻在下；每爻可点“单/拆/重/交”直接指定）----
+  const YAO_PICK = [['单',1],['拆',2],['重',3],['交',0]];
   function renderYaos(){
     yaoBox.innerHTML = '';
     for (let i = 5; i >= 0; i--) {
       const b = beis[i], info = YAO_INFO[b];
       const row = document.createElement('div');
       row.className = 'yao-row';
-      row.innerHTML =
+
+      const line = document.createElement('div');
+      line.className = 'yao-line';
+      line.innerHTML =
         '<div class="pos">' + POS_NAMES[i] + '</div>' +
         '<div class="sym">' + info.sym + '</div>' +
         '<div class="tag' + (info.dong ? ' dong' : '') + '">' + info.tag + '</div>';
-      row.addEventListener('click', () => {
-        beis[i] = [1,2,3,0][ [1,2,3,0].indexOf(beis[i]) ]; // 1→2→3→0→1
-        renderYaos();
-      });
+      row.appendChild(line);
+
+      const pick = document.createElement('div');
+      pick.className = 'yao-pick';
+      for (const [lab, v] of YAO_PICK) {
+        const btn = document.createElement('button');
+        btn.textContent = lab;
+        if (b === v) btn.className = 'sel';
+        btn.addEventListener('click', () => {
+          beis[i] = v;
+          renderYaos();
+        });
+        pick.appendChild(btn);
+      }
+      row.appendChild(pick);
       yaoBox.appendChild(row);
     }
   }
@@ -149,7 +164,7 @@
       html += '<tr class="' + cls.trim() + '">' +
         '<td class="ls">' + yao.liushen + '</td>' +
         '<td class="lq">' + yao.liuqin + '</td>' +
-        '<td class="naz">' + yao.gan + yao.zhi + '<div class="kp">' + yao.wuxing + '</div></td>' +
+        '<td class="naz"><div class="gz">' + yao.gan + yao.zhi + '</div><div class="kp">' + yao.wuxing + '</div></td>' +
         '<td class="yf">' + info.sym + '</td>' +
         '<td class="sy">' + sy + '</td>' +
         '<td class="bd">' + bd + (kp ? '<div class="kp">' + kp + '</div>' : '') + '</td>' +
@@ -172,7 +187,7 @@
       case 'chuxing': return LYZH.fenxi_chuxing(pan);
       case 'guansi':  return LYZH.fenxi_guansi(pan);
       case 'fangzi':  return LYZH.fenxi_fangzi(pan);
-      case 'hetong':  return LYZH.fenxi_hetong(pan);
+      case 'hetong': return LYZH.fenxi_hetong(pan);
       case 'pengyou': return LYZH.fenxi_pengyou(pan);
       default:        return LY.fenxi_gua(pan);
     }
