@@ -1,3 +1,4 @@
+# 2026-10-20 触发重建：手动指定卦改为4按钮（修复点击无效），变卦逻辑已穷举核对无误
 name: 构建APK
 
 on:
@@ -155,6 +156,7 @@ jobs:
               });
               release = c.data;
             }
+            // 清理旧的下载文件，避免重复
             const existing = await github.rest.repos.listReleaseAssets({
               owner, repo, release_id: release.id
             });
