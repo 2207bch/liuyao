@@ -51,13 +51,19 @@
   /* 起卦爻 */
   .yao-box{background:var(--bg); border:1px solid var(--border); border-radius:8px;
     padding:8px 10px; margin:6px 0 12px;}
-  .yao-row{display:flex; align-items:center; gap:10px; padding:7px 4px;
-    border-bottom:1px dashed var(--border); cursor:pointer;}
+  .yao-row{padding:8px 4px; border-bottom:1px dashed var(--border);}
   .yao-row:last-child{border-bottom:none;}
-  .yao-row .pos{width:38px; font-size:13px; color:var(--red2); font-weight:600;}
-  .yao-row .sym{flex:1; font-family:monospace; font-size:17px; letter-spacing:1px; color:var(--line);}
-  .yao-row .tag{font-size:12px; color:var(--kong); width:34px; text-align:right;}
-  .yao-row .tag.dong{color:var(--dong); font-weight:700;}
+  .yao-line{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .yao-line .pos{width:38px; font-size:13px; color:var(--red2); font-weight:600;}
+  .yao-line .sym{flex:1; font-family:monospace; font-size:17px; letter-spacing:1px;
+    color:var(--line); text-align:center;}
+  .yao-line .tag{font-size:12px; color:var(--kong); width:30px; text-align:right;}
+  .yao-line .tag.dong{color:var(--dong); font-weight:700;}
+  .yao-pick{display:flex; gap:6px;}
+  .yao-pick button{flex:1; border:1px solid var(--border); background:var(--panel);
+    color:var(--ink); border-radius:6px; padding:7px 0; font-size:13px; cursor:pointer;}
+  .yao-pick button.sel{background:var(--red); color:#fff; border-color:var(--red); font-weight:700;}
+  .yao-pick button:active{opacity:.85;}
 
   .btn-row{display:flex; gap:10px;}
   .btn{flex:1; border:none; border-radius:10px; padding:13px; font-size:16px;
@@ -79,8 +85,9 @@
     vertical-align:middle;}
   .gua-table .ls{color:var(--red2); width:40px;}
   .gua-table .lq{font-weight:600; width:42px;}
-  .gua-table .naz{color:var(--ink); width:52px; font-size:12px;}
-  .gua-table .yf{font-family:monospace; font-size:14px; width:52px;}
+  .gua-table .naz{color:var(--ink); width:56px; font-size:12px;}
+  .gua-table .naz .gz{line-height:1.25; white-space:nowrap;}
+  .gua-table .yf{font-family:monospace; font-size:14px; width:48px;}
   .gua-table .sy{color:var(--red); font-weight:700; width:24px;}
   .gua-table .bd{font-size:11px; color:var(--dong); width:58px;}
   .gua-table tr.dong{background:#fbeeec;}
@@ -150,7 +157,7 @@
       <button class="btn shake" id="shakeBtn">一键摇卦</button>
       <button class="btn go" id="goBtn">排盘断卦</button>
     </div>
-    <div class="hint">点每一行可手动选爻；●单=少阳　●拆=少阴　●重=老阳(动)　●交=老阴(动)</div>
+    <div class="hint">点每爻下面的“单/拆/重/交”可手动指定；单=少阳　拆=少阴　重=老阳(动)　交=老阴(动)</div>
   </div>
 
   <!-- 卦盘 -->
