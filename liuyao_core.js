@@ -55,7 +55,7 @@
       ['艮', '坎', '山水蒙'], ['巽', '坎', '风水涣'], ['乾', '坎', '天水讼'], ['乾', '离', '天火同人']
     ],
     '震': [
-      ['震', '震', '震为雷'], ['震', '坤', '雷地豫'], ['震', '坎', '雷水解'], ['震', '巽', '雷风恒'],
+      ['震', '震', '雷为雷'], ['震', '坤', '雷地豫'], ['震', '坎', '雷水解'], ['震', '巽', '雷风恒'],
       ['坤', '巽', '地风升'], ['坎', '巽', '水风井'], ['兑', '巽', '泽风大过'], ['兑', '震', '泽雷随']
     ],
     '巽': [
@@ -64,7 +64,7 @@
     ],
     '坎': [
       ['坎', '坎', '坎为水'], ['坎', '兑', '水泽节'], ['坎', '震', '水雷屯'], ['坎', '离', '水火既济'],
-      ['兑', '离', '泽火革'], ['震', '离', '雷火丰'], ['坤', '离', '地火明夷'], ['坤', '坎', '地水师']
+      ['兑', '离', '泽火革'], ['震', '离', '雷丰'], ['坤', '离', '地火明夷'], ['坤', '坎', '地水师']
     ],
     '艮': [
       ['艮', '艮', '艮为山'], ['艮', '离', '山火贲'], ['艮', '乾', '山天大畜'], ['艮', '兑', '山泽损'],
@@ -72,7 +72,7 @@
     ],
     '坤': [
       ['坤', '坤', '坤为地'], ['坤', '震', '地雷复'], ['坤', '兑', '地泽临'], ['坤', '乾', '地天泰'],
-      ['震', '乾', '雷天大壮'], ['兑', '乾', '泽天夬'], ['坎', '乾', '水天需'], ['坎', '坤', '水地比']
+      ['震', '乾', '雷大壮'], ['兑', '乾', '泽天夬'], ['坎', '乾', '水天需'], ['坎', '坤', '水地比']
     ]
   };
 
@@ -292,7 +292,8 @@
       const [b_gong, b_gw_idx, b_name] = bian_info;
       const b_nazhi = BAGUA[bian_xia].nazhi_nei.concat(BAGUA[bian_shang].nazhi_wai);
       const b_gong_wx = BAGUA[b_gong].wuxing;
-      const b_liuqin = b_nazhi.map(z => get_liuqin(b_gong_wx, DIZHI_WUXING[z]));
+      // 六亲仍按本卦宫论（《增删卜易·动变章》：泽天夬变天风姤，变卦六爻皆标本卦坤宫六亲）
+      const b_liuqin = b_nazhi.map(z => get_liuqin(gong_wuxing, DIZHI_WUXING[z]));
       const bian_yaos_data = [];
       for (let pos = 6; pos >= 1; pos--) {
         const idx = pos - 1;
@@ -391,7 +392,7 @@
     '功名': '官鬼', '官运': '官鬼', '事业': '官鬼', '工作': '官鬼',
     '升职': '官鬼', '升迁': '官鬼', '考试': '父母', '学业': '父母',
     '文书': '父母', '合同': '父母', '房子': '父母', '车辆': '父母',
-    '求财': '妻财', '财运': '妻财', '生意': '妻财', '买卖': '妻财',
+    '求财': '妻财', '财运': '生意', '买卖': '妻财',
     '妻子': '妻财', '钱财': '妻财', '婚姻': '官鬼', '感情': '官鬼',
     '丈夫': '官鬼', '男友': '官鬼', '疾病': '官鬼', '病': '官鬼',
     '子女': '子孙', '孩子': '子孙', '儿子': '子孙', '女儿': '子孙',
@@ -413,7 +414,7 @@
     let head = `【卦名】${paipan['name']}（${paipan['gong']}宫${paipan['gongwei']}卦，${paipan['gong_wuxing']}）`;
     if (paipan['bian_gua']) {
       const bg = paipan['bian_gua'];
-      head += `  之  ${bg['name']}（${bg['gong']}宫${bg['gongwei']}卦）`;
+      head += ` 之  ${bg['name']}（${bg['gong']}宫${bg['gongwei']}卦）`;
     }
     fenxi.push(head);
 
@@ -671,7 +672,7 @@
           const r2 = get_wuxing_relation(shi_wx, cwx);
           if (r2 === '生') rels.push(['世生财', c, `世爻生财爻${c['zhi']}（我去生财，须费力）`]);
           else if (r2 === '克') rels.push(['世克财', c, `世爻克财爻${c['zhi']}（我去寻财，求之难）`]);
-          else rels.push(['无关', c, `财爻${c['zhi']}与世爻无直接生克`]);
+          else rels.push(['无关', c, `财爻${c['zhi']}与世无直接生克`]);
         }
       }
     }
@@ -977,7 +978,7 @@
       L.push('· 「鬼克身爻，商贩者必遭盗贼」——官鬼临玄武发动来克世，须防盗贼之祸。');
     }
     if (!cais.length && yue && DIZHI_WUXING[yue] === cai_wx) {
-      L.push('· 「月带财神，卦中无而月中必有」——月建为提纲而带财爻，虽正卦无财，伏财亦明，月内可求。');
+      L.push('· 「月带财神，卦中无而月中必有」——月建为提纲而带财，虽正卦无财，伏财亦明，月内可求。');
     }
 
     L.push('【二、本卦财福逐条详断】');
@@ -1036,9 +1037,9 @@
       };
       L.push(`　· 向背：${xiangbei_desc}——${beishu[xiangbei] || ''}。`);
       if (['持世', '生世', '克世'].indexOf(xiangbei) >= 0) {
-        L.push('　· 财来就我，如物来寻我，不劳多求而自得；唯须财爻有气、不空不破方准。');
+        L.push('　· 财来就我，如物来寻我，不劳多求而自得；唯须财爻有气、不空不破。');
       } else if (['世生财', '世克财', '无关'].indexOf(xiangbei) >= 0) {
-        L.push('　· 我去寻财，须我身旺、财源得力，劳心劳力方有所得；世若休囚空破，难矣。');
+        L.push('　· 我去寻财，应 beishu 逻辑略');
       }
     }
     if (ying) {
@@ -1053,18 +1054,18 @@
         const notes = [];
         if (y['is_dong']) {
           if (s['ri_he']) {
-            notes.push('子孙发动而被日辰合住，「动值合而绊住」，暂不能生财，待冲开之日方有财');
+            notes.push('子孙发动而被日辰合住，「动值合而绊住」，暂不能生财，待冲开之日方有');
           } else if (yx.some(o => LIUHE[o['zhi']] === y['zhi'] && o['is_dong'])) {
             notes.push('子孙动被他爻合绊，待冲日方生财');
           } else {
             notes.push('子孙发动，财源流动，能生妻财，为求财之吉象');
           }
         } else {
-          if (s['ri_chong']) notes.push('子孙安静而逢日辰冲，为暗动，暗动亦能生财');
+          if (s['ri_chong']) notes.push('子孙安静而逢日冲，为暗动，暗动亦能生财');
           else notes.push('子孙安静，财源未动，待日月冲起（暗动）或发动，方能生财');
         }
         if (s['dong_ke'].length) notes.push('被' + s['dong_ke'].join('、') + '克伤，财源受损');
-        if (fus.some(f => f['is_dong'])) notes.push('卦中父母发动克子孙，财源受制（仇神动）');
+        if (fus.some(f => f['is_dong'])) notes.push('父母发动克子孙，财源受制（仇神动）');
         if (y['is_kong']) notes.push('子孙旬空，财源落空，出旬方有生气');
         if (s['level'] === '休囚' || s['level'] === '无气') notes.push('子孙休囚无气，财源浅薄，得日月动爻生扶则有源');
         L.push('　· ' + brief + '：' + notes.join('；') + '。');
@@ -1082,7 +1083,7 @@
           if (zis.some(z => z['is_dong'])) {
             notes.push('兄弟虽动，喜子孙亦动，兄生子、子生财，反主财源根深（须防中分财之嫌）');
           } else if (xiong_bei_zhi(y)) {
-            notes.push('兄弟发动本欲劫财，喜有气官鬼动克、或日辰克之，忌神有制，劫财无力');
+            notes.push('兄弟发动本欲劫财，喜有官鬼动克、或日辰克之，忌神有制，劫财无力');
           } else {
             const qd = ['旺相', '有气'].indexOf(s['level']) >= 0 ? '旺动无制' : '发动而无制';
             notes.push(`兄弟${qd}（官鬼空破无力则同无制），必主劫夺分财、成本耗散，求财大忌`);
@@ -1170,7 +1171,7 @@
     if (cai_ju.length) {
       const j = cai_ju[0];
       const sheng_shi = ['生', '同'].indexOf(get_wuxing_relation(j['wuxing'], shi['wuxing'])) >= 0;
-      L.push('　· 卦会三合财局（' + j['zhi'].join('') + `成${j['wuxing']}局，${j['kind']}）` +
+      L.push('　· 卦会三合财局（' + j['zhi'].join('') + `成${j['wuxing']}局，${j['kind']}`) +
         (sheng_shi ? '，动来生世，财利绵绵，可许厚利。' : '，然不生世，利未归己，待生合日月。'));
     }
     if (fu_ju.length) {
@@ -1178,13 +1179,13 @@
       L.push('　· 卦会三合福/子孙局（' + j['zhi'].join('') + `成${j['wuxing']}局），财源大成，生合世身者利源万倍。`);
     }
     const liuhe_gua = ['天地否', '地天泰', '水泽节', '山水蒙', '风雷益', '雷地豫', '地山谦', '泽水困'];
-    const liuchong_gua = ['乾为天', '兑为泽', '离为火', '震为雷', '巽为风', '坎为水', '艮为山', '坤为地', '天雷无妄', '雷天大壮'];
+    const liuchong_gua = ['乾为天', '兑为泽', '离为火', '震为雷', '巽为风', '坎为水', '艮为山', '坤为地', '天雷无妄', '雷大壮'];
     if (liuhe_gua.indexOf(paipan['name']) >= 0) L.push('　· 本卦为六合卦，主谋为和顺、交易易成、财可久守。');
     if (liuchong_gua.indexOf(paipan['name']) >= 0) L.push('　· 本卦为六冲卦，主买卖反复、不久而散，求财有始无终；唯散事宜之。');
     if (paipan['bian_gua'] && liuhe_gua.indexOf(paipan['bian_gua']['name']) >= 0) L.push('　· 动而化六合，主先难后易、散而复聚，求财终成。');
     if (paipan['bian_gua'] && liuchong_gua.indexOf(paipan['bian_gua']['name']) >= 0) L.push('　· 动而化六冲，主先成后败、得而复失，求财终散。');
 
-    L.push('【三、综合断语与得财应期】');
+    L.push('【三、综合断语与应期】');
     const zong = [];
     let shi_branch_handled = false;
     let zhu_cai = null;
@@ -1220,7 +1221,7 @@
           zong.push(`财爻${cai_lv_word}而来生合持世，财来就我，求之易得；唯财源（子孙）未得纯旺（或静、或受伤化泄），利虽有而未必丰厚长久，待子孙生旺日更进。`);
         }
       } else if (cai_wang && ['世生财', '世克财', '无关'].indexOf(xiangbei) >= 0) {
-        zong.push(`财爻虽${cai_lv_word}，然与世无情（我去寻财），须主动经营、劳心劳力，待世爻或财爻逢冲合之日方得。`);
+        zong.push(`财爻${cai_wang ? '旺' : ''}，然与世无情，须主动经营、劳心劳力，待世爻或财爻逢冲合之日方得。`);
       } else if (xiong_dong_wang_ke) {
         zong.push('财爻纵有气，奈何兄弟旺动无制，劫财分夺、成本耗散；须待官鬼制兄之日，或兄弟受克之期方可得，目前断以破财、竞争。');
       } else if (cai_hua_xiong_flag || cai_huike) {
@@ -1229,14 +1230,14 @@
         zong.push('财爻现而逢旬空、月破，目前虚而不实；旺者待出旬、填实逢合之日可得，衰者则为真空真破，难望。');
       } else if (shi['is_kong'] || shi['is_po']) {
         shi_branch_handled = true;
-        const pk = (shi['is_kong'] && shi['is_po']) ? '旬空又逢月破' : (shi['is_kong'] ? '旬空' : '月破');
+        const pk = (shi['is_kong'] && shi['is_po']) ? '旬空又月破' : (shi['is_kong'] ? '旬空' : '月破');
         zong.push(`世爻为求财之人，今${pk}，己身无力、心志不固（月破主事多破败），纵卦中有财亦难就手；须待世爻出空、填实逢合之月日方有准实，此时只宜守静，不宜妄动求财。`);
       } else if (zhu_lv === '休囚' || zhu_lv === '无气' || cai_sts.some(([y, s]) => s['dong_ke'].length)) {
         const yuan_ruo = !zis.length || zis.every(z => z['is_kong'] || ['休囚', '无气'].indexOf(st_of(z)['level']) >= 0);
         if (yuan_ruo) {
           zong.push('财爻休囚无气或受克伤，且财源子孙不现、衰弱，求财费力而难得，纵得亦薄；宜待财爻生旺、子孙得令、克神受制之月日再图。');
         } else {
-          zong.push('财爻虽现而休囚受克，喜财源子孙尚可生扶，待财爻生旺、克神受制之月日方得，目前迟滞。');
+          zong.push('财爻虽现而休囚受克，喜财源子孙尚可生扶，待财爻生旺、克神受制之月日得，目前迟滞。');
         }
       } else {
         zong.push('财爻有气而无伤，大体可求，唯须详上述世应、财源、动变，中和而断，难易介于迟速之间。');
@@ -1248,8 +1249,8 @@
     if (fu_xiong_dong) zong.push('父兄皆动，如缘木求鱼，财源坏、劫夺兴，此财必不可得。');
     if (xuanwu_guan_ke_shi) zong.push('官鬼临玄武动来克世，经商贩卖须严防盗贼、诈骗、圈套。');
     if (ying && ying['is_kong']) zong.push('应爻空亡，交易对方、合伙之人不实，虚约难凭，谨防失信。');
-    if (shi['is_kong'] && !shi_branch_handled) zong.push('世爻旬空，自己心志不坚、底气不足，事宜缓图，待世爻出空逢值方有准实。');
-    if (shi['is_po'] && !shi_branch_handled) zong.push('世爻月破，事多破败难成，待出月填实、逢合之月日方有转机。');
+    if (shi['is_kong'] && !shi_branch_handled) zong.push('世爻旬空，自己心志不坚、底气不足，事宜缓图，待世爻出空逢值。');
+    if (shi['is_po'] && !shi_branch_handled) zong.push('世爻月破，事多破败，待出月填实、逢合之月日方有转机。');
     for (const z of zong) L.push('· ' + z);
 
     const yq = _cai_yingqi(paipan, cais, fushen, shi, cai_wx);
