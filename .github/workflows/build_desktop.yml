@@ -60,7 +60,8 @@ jobs:
             }
             await github.rest.repos.uploadReleaseAsset({
               owner, repo, release_id: release.id,
-              name: 'liuyao-desktop.exe', data: exe
+              name: 'liuyao-desktop.exe', data: exe,
+              headers: { 'content-type': 'application/x-msdownload' }
             });
             await github.rest.issues.create({owner, repo,
               title:'桌面版 EXE 构建并发布成功',
