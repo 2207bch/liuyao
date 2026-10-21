@@ -187,7 +187,7 @@
       case 'chuxing': return LYZH.fenxi_chuxing(pan);
       case 'guansi':  return LYZH.fenxi_guansi(pan);
       case 'fangzi':  return LYZH.fenxi_fangzi(pan);
-      case 'hetong': return LYZH.fenxi_hetong(pan);
+      case 'hetong':  return LYZH.fenxi_hetong(pan);
       case 'pengyou': return LYZH.fenxi_pengyou(pan);
       default:        return LY.fenxi_gua(pan);
     }
