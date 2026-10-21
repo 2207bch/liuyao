@@ -1,0 +1,60 @@
+name: 启用在线网页
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/enable_pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  issues: write
+
+jobs:
+  enable:
+    name: 启用 Pages（main 分支根目录直接托管）
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: 启用并报告
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let msg = '';
+            try {
+              const r = await github.rest.repos.createPagesSite({
+                owner: context.repo.owner, repo: context.repo.repo,
+                build_type: 'legacy',
+                source: { branch: 'main', path: '/' }
+              });
+              msg = 'createPagesSite 成功：' + JSON.stringify(r.data);
+            } catch (e1) {
+              msg = 'create 返回: ' + e1.message;
+              try {
+                const u = await github.rest.repos.updateInformationAboutPagesSite({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  build_type: 'legacy',
+                  source: { branch: 'main', path: '/' }
+                });
+                msg += ' | update 成功：' + JSON.stringify(u.status);
+              } catch (e2) {
+                msg += ' | update 返回: ' + e2.message;
+              }
+            }
+            await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+              title:'【网页】启用结果', body: msg});
+            try {
+              const g = await github.rest.repos.getPages({
+                owner: context.repo.owner, repo: context.repo.repo
+              });
+              await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+                title:'【网页】站点信息',
+                body:'网址：' + (g.data.html_url || ('https://' + context.repo.owner + '.github.io/' + context.repo.repo + '/'))
+                  + ' | status=' + g.data.status + ' | source=' + JSON.stringify(g.data.source)});
+            } catch (e3) {
+              await github.rest.issues.create({owner:context.repo.owner,repo:context.repo.repo,
+                title:'【网页】查询失败', body: e3.message});
+            }
